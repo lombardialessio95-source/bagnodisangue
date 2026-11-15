@@ -2192,25 +2192,25 @@ const SoundEngine = {
 
   init() {
     this.unlockIOSAudioChannel();
-    if (!this.ctx) {
+    try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
+      if (AudioCtx && !this.ctx) {
         this.ctx = new AudioCtx();
       }
-    }
-    if (!this.ctx) return;
-
-    if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
-      this.ctx.resume().catch(() => {});
-    }
-
-    try {
-      const buffer = this.ctx.createBuffer(1, 1, 22050);
-      const source = this.ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(this.ctx.destination);
-      source.start(0);
     } catch (e) {}
+
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+        this.ctx.resume().catch(() => {});
+      }
+      try {
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+      } catch (e) {}
+    }
 
     this.startBGM();
   },
@@ -4236,6 +4236,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   SoundEngine.updateTrackButtonUI();
 
   document.getElementById('btn-track').addEventListener('click', () => {
+    SoundEngine.init();
     SoundEngine.nextTrack();
   });
 
@@ -4266,11 +4267,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     ShareManager.shareGame(`🩸 ${headline} con ${dmg} danni inflitti su BAGNO DI SANGUE! Riesci a battermi?`);
   });
 
-  // Sblocco audio universale Android Chrome + iPhone Safari
+  // Sblocco audio universale Android Chrome + iPhone Safari su qualsiasi interazione
   const unlockAudio = () => SoundEngine.init();
-  window.addEventListener('touchstart', unlockAudio, { passive: true });
-  window.addEventListener('click', unlockAudio, { passive: true });
-  window.addEventListener('keydown', unlockAudio, { passive: true });
+  ['touchstart', 'click', 'keydown', 'pointerdown'].forEach(evName => {
+    window.addEventListener(evName, unlockAudio, { passive: true });
+  });
 
   if (await AppState.restoreSession()) {
     updateLobbyUI();
@@ -4309,6 +4310,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('btn-customize').addEventListener('click', () => {
+    SoundEngine.init();
     OnlineManager.cancelPrivateRoom();
     initCustomizationUI();
     showScreen('screen-custom');
@@ -4346,6 +4348,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Save Customization
   document.getElementById('btn-save-custom').addEventListener('click', async () => {
+    SoundEngine.init();
     await AppState.saveCurrentUser();
     updateLobbyUI();
     showScreen('screen-lobby');
@@ -4353,6 +4356,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Game Over Buttons
   document.getElementById('btn-rematch').addEventListener('click', async () => {
+    SoundEngine.init();
     if (!FightEngine.isOnlineMatch) {
       FightEngine.startMatch();
     } else if (ONLINE_ENABLED && db && FightEngine.roomId && !FightEngine.forfeitWin) {
@@ -4382,12 +4386,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('btn-go-custom').addEventListener('click', async () => {
+    SoundEngine.init();
     await FightEngine.leaveOnlineRoomGracefully();
     initCustomizationUI();
     showScreen('screen-custom');
   });
 
   document.getElementById('btn-go-menu').addEventListener('click', async () => {
+    SoundEngine.init();
     await FightEngine.leaveOnlineRoomGracefully();
     updateLobbyUI();
     showScreen('screen-lobby');
@@ -4395,6 +4401,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Keyboard Controls
   window.addEventListener('keydown', (e) => {
+    SoundEngine.init();
     FightEngine.keys[e.code] = true;
     const myF = FightEngine.getMyFighter();
     if (e.code === 'KeyJ') FightEngine.triggerAttack(myF, 'punch');
