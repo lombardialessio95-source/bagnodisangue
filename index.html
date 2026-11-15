@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bagno di Sangue">
@@ -10,8 +10,132 @@
 <meta name="theme-color" content="#8a0000">
 <title>BAGNO DI SANGUE - Arcade Fighter Online</title>
 <link id="dynamic-apple-icon" rel="apple-touch-icon" sizes="512x512">
-<link id="dynamic-favicon" rel="icon" type="image/png">
+<link id="dynamic-favicon" rel="icon" type="image/jpeg" sizes="512x512">
 <link id="dynamic-manifest" rel="manifest">
+
+<script>
+/* ============================================================================
+ * CONFIGURAZIONE ICONA E MANIFEST PWA (BLOB URL PER ANDROID CHROME + IOS)
+ * ============================================================================ */
+const CUSTOM_ICON_SRC = 'IMG-20261115-WA1949.jpg';
+
+(function bootstrapPWAIconsAndManifest() {
+  function drawFallbackIcon() {
+    try {
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(size * 0.5, size * 0.45, 40, size * 0.5, size * 0.5, size * 0.72);
+      grad.addColorStop(0, '#c40000');
+      grad.addColorStop(0.55, '#8a0000');
+      grad.addColorStop(1, '#1a0000');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(14, 14, size - 28, size - 28);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '900 104px Impact, "Arial Black", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('BAGNO', size / 2, 210);
+      ctx.font = '900 52px Impact, "Arial Black", sans-serif';
+      ctx.fillStyle = '#ff3333';
+      ctx.fillText('DI', size / 2, 282);
+      ctx.font = '900 98px Impact, "Arial Black", sans-serif';
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillText('SANGUE', size / 2, 366);
+
+      return canvas.toDataURL('image/png');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  let currentManifestBlobUrl = null;
+
+  function applyIconAndManifest(iconUrl, mimeType) {
+    window.__BDS_ICON_URL__ = iconUrl;
+    const appleIcon = document.getElementById('dynamic-apple-icon');
+    const favIcon = document.getElementById('dynamic-favicon');
+    if (appleIcon) appleIcon.href = iconUrl;
+    if (favIcon) {
+      favIcon.type = mimeType;
+      favIcon.href = iconUrl;
+    }
+
+    const pageUrl = window.location.href.split('#')[0].split('?')[0];
+    const scopeUrl = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
+
+    const manifestObj = {
+      id: pageUrl,
+      name: 'BAGNO DI SANGUE',
+      short_name: 'BagnoSangue',
+      description: 'Picchiaduro arcade 2D multiplayer online e offline.',
+      start_url: pageUrl,
+      scope: scopeUrl,
+      display: 'fullscreen',
+      display_override: ['fullscreen', 'standalone'],
+      orientation: 'any',
+      theme_color: '#8a0000',
+      background_color: '#0a0a0a',
+      icons: iconUrl ? [
+        { src: iconUrl, sizes: '192x192', type: mimeType, purpose: 'any' },
+        { src: iconUrl, sizes: '512x512', type: mimeType, purpose: 'any' },
+        { src: iconUrl, sizes: '512x512', type: mimeType, purpose: 'maskable' }
+      ] : []
+    };
+
+    const manifestLink = document.getElementById('dynamic-manifest');
+    if (manifestLink) {
+      if (currentManifestBlobUrl) URL.revokeObjectURL(currentManifestBlobUrl);
+      const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+      currentManifestBlobUrl = URL.createObjectURL(blob);
+      manifestLink.href = currentManifestBlobUrl;
+    }
+  }
+
+  const absoluteCustomUrl = new URL(CUSTOM_ICON_SRC, window.location.href).href;
+  const isJpg = CUSTOM_ICON_SRC.toLowerCase().endsWith('.jpg') || CUSTOM_ICON_SRC.toLowerCase().endsWith('.jpeg');
+  applyIconAndManifest(absoluteCustomUrl, isJpg ? 'image/jpeg' : 'image/png');
+
+  const probe = new Image();
+  probe.onerror = function() {
+    const fallback = drawFallbackIcon();
+    if (fallback) applyIconAndManifest(fallback, 'image/png');
+  };
+  probe.src = absoluteCustomUrl;
+})();
+
+/* Blocco globale anti-zoom iOS Safari (double-tap e pinch-to-zoom) */
+(function preventIOSZoom() {
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(e) {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 320) {
+      const tag = e.target && e.target.tagName;
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+  }, { passive: false });
+})();
+</script>
+
 <!-- Firebase SDK v10 Compat (App + Realtime Database) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -40,18 +164,20 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    touch-action: none;
+    touch-action: manipulation;
     font-family: 'Teko', 'Arial Black', Impact, sans-serif;
   }
 
   html, body {
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    inset: 0;
     overflow: hidden;
     background-color: var(--bg-black);
     color: var(--text-white);
     overscroll-behavior: none;
+    touch-action: manipulation;
   }
 
   .screen {
@@ -72,15 +198,41 @@
     display: flex;
   }
 
-  /* MENU SCREENS: PORTRAIT-FIRST & SCROLL-SAFE IN LANDSCAPE */
   #screen-auth, #screen-custom, #screen-gameover {
     overflow-y: auto;
     touch-action: pan-y;
     justify-content: safe center;
   }
 
-  #screen-auth *, #screen-custom *, #screen-gameover * {
-    touch-action: pan-y;
+  #screen-fight, #screen-fight * {
+    touch-action: none;
+  }
+
+  /* TOAST NOTIFICATION */
+  #toast-banner {
+    position: fixed;
+    top: calc(54px + var(--safe-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 2500;
+    background: rgba(20, 20, 20, 0.96);
+    border: 2px solid var(--arcade-gold);
+    color: var(--arcade-gold);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    text-align: center;
+    max-width: 90vw;
+  }
+
+  #toast-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 
   /* MODE STATUS BADGE */
@@ -208,7 +360,7 @@
     border: 2px solid #444;
     color: #fff;
     padding: 8px 12px;
-    font-size: 1.35rem;
+    font-size: 16px;
     border-radius: 4px;
     outline: none;
     user-select: text;
@@ -234,11 +386,18 @@
     box-shadow: 0 4px 0 #4d0000, 0 6px 15px rgba(0,0,0,0.6);
     transition: transform 0.08s, filter 0.1s;
     text-align: center;
+    touch-action: manipulation;
   }
 
-  .btn-arcade:active {
+  .btn-arcade:active:not(:disabled) {
     transform: translateY(3px);
     box-shadow: 0 1px 0 #4d0000;
+  }
+
+  .btn-arcade:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
   }
 
   .btn-arcade.gold {
@@ -253,6 +412,13 @@
     color: #050505;
     border-color: #fff;
     box-shadow: 0 4px 0 #00330e;
+  }
+
+  .btn-arcade.blue {
+    background: linear-gradient(180deg, #3399ff 0%, #0059b3 100%);
+    color: #fff;
+    border-color: #cce6ff;
+    box-shadow: 0 4px 0 #00264d;
   }
 
   .btn-arcade.install-pwa {
@@ -270,6 +436,12 @@
     box-shadow: 0 4px 0 #000;
   }
 
+  .utility-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
   .error-msg {
     color: #ff4d4d;
     font-size: 1.1rem;
@@ -277,13 +449,18 @@
     text-align: center;
   }
 
-  /* MUTE BUTTON (SAFE AREA AWARE) */
-  #btn-mute {
+  /* TOP RIGHT BUTTONS (FULLSCREEN + MUTE) */
+  .top-right-controls {
     position: fixed;
     top: max(10px, var(--safe-top));
     right: max(10px, var(--safe-right));
     z-index: 999;
-    background: rgba(26, 26, 26, 0.88);
+    display: flex;
+    gap: 6px;
+  }
+
+  .hud-top-btn {
+    background: rgba(26, 26, 26, 0.9);
     border: 2px solid var(--arcade-gold);
     color: var(--arcade-gold);
     padding: 6px 10px;
@@ -292,7 +469,8 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    touch-action: manipulation;
   }
 
   /* LOBBY HEADER & PORTRAIT-OPTIMIZED LAYOUT */
@@ -310,7 +488,7 @@
     padding-top: max(7px, var(--safe-top));
     padding-bottom: 7px;
     padding-left: max(14px, var(--safe-left));
-    padding-right: calc(88px + var(--safe-right));
+    padding-right: calc(135px + var(--safe-right));
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -345,10 +523,6 @@
     gap: 12px;
   }
 
-  .lobby-scroll-area * {
-    touch-action: pan-y;
-  }
-
   .lobby-columns {
     display: flex;
     flex-direction: column;
@@ -381,6 +555,7 @@
     border-radius: 4px;
     cursor: pointer;
     text-align: center;
+    touch-action: manipulation;
   }
 
   .diff-btn.selected {
@@ -471,7 +646,7 @@
     width: 95px;
     text-align: center;
     letter-spacing: 3px;
-    font-size: 1.35rem;
+    font-size: 16px;
     padding: 6px;
   }
 
@@ -486,7 +661,7 @@
     gap: 4px;
   }
 
-  /* MODAL OVERLAYS (INVITE + iOS PWA INSTRUCTIONS) */
+  /* MODAL OVERLAYS (INVITE + PWA INSTALL GUIDE) */
   #invite-modal {
     position: fixed;
     top: calc(56px + var(--safe-top));
@@ -521,11 +696,12 @@
     position: fixed;
     inset: 0;
     z-index: 1200;
-    background: rgba(0, 0, 0, 0.88);
+    background: rgba(0, 0, 0, 0.92);
     display: none;
     align-items: center;
     justify-content: center;
     padding: 16px;
+    touch-action: auto;
   }
 
   #pwa-ios-modal.active {
@@ -537,11 +713,11 @@
     border: 3px solid var(--arcade-gold);
     box-shadow: 0 0 30px rgba(255, 26, 26, 0.7);
     border-radius: 12px;
-    padding: 20px;
-    width: min(92vw, 390px);
+    padding: 18px;
+    width: min(94vw, 410px);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     text-align: center;
   }
 
@@ -549,18 +725,18 @@
     background: #0d0d0d;
     border: 1.5px solid #444;
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     gap: 12px;
     text-align: left;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     line-height: 1.15;
   }
 
   .ios-icon-badge {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
     background: #1c1c1c;
     border: 2px solid var(--arcade-gold);
@@ -568,9 +744,10 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-size: 1.35rem;
   }
 
-  /* CUSTOMIZE SCREEN (PORTRAIT-OPTIMIZED) */
+  /* CUSTOMIZE SCREEN */
   .custom-layout {
     display: flex;
     flex-direction: column;
@@ -644,6 +821,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    touch-action: manipulation;
   }
 
   .pill-btn.active {
@@ -672,12 +850,12 @@
     display: block;
   }
 
-  /* HUD OVERLAY (SAFE AREA PROTECTED) */
+  /* HUD OVERLAY */
   #fight-hud {
     position: absolute;
     top: max(8px, var(--safe-top));
     left: max(10px, var(--safe-left));
-    right: calc(88px + var(--safe-right));
+    right: calc(135px + var(--safe-right));
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -771,7 +949,7 @@
     color: var(--arcade-gold);
   }
 
-  /* TOUCH CONTROLS (SAFE AREA PROTECTED) */
+  /* TOUCH CONTROLS */
   #touch-controls {
     position: absolute;
     bottom: max(14px, var(--safe-bottom));
@@ -957,7 +1135,11 @@
 </head>
 <body>
 
-<button id="btn-mute" title="Audio On/Off">🔊 AUDIO</button>
+<div id="toast-banner"></div>
+<div class="top-right-controls">
+  <button id="btn-fullscreen" class="hud-top-btn" title="Schermo Intero">⛶</button>
+  <button id="btn-mute" class="hud-top-btn" title="Audio On/Off">🔊 AUDIO</button>
+</div>
 
 <!-- PORTRAIT ORIENTATION PAUSE OVERLAY (FIGHT ONLY) -->
 <div id="rotate-overlay">
@@ -966,32 +1148,20 @@
   <div class="rotate-sub">IL MATCH È IN PAUSA AUTOMATICA</div>
 </div>
 
-<!-- iOS / MANUAL PWA INSTALL MODAL -->
+<!-- MANUAL PWA INSTALL MODAL (ANDROID CHROME + IPHONE SAFARI) -->
 <div id="pwa-ios-modal">
   <div class="ios-guide-card">
-    <div style="font-size:1.8rem; color:var(--arcade-gold); line-height:1;">📲 INSTALLA BAGNO DI SANGUE</div>
-    <div style="font-size:1.15rem; color:#ccc;">Gioca a schermo intero come un'app nativa sul tuo telefono:</div>
+    <img id="modal-preview-icon" alt="Icona App" style="width:82px; height:82px; border-radius:18px; border:2px solid var(--arcade-gold); margin:0 auto; display:block; object-fit:cover;">
+    <div style="font-size:1.75rem; color:var(--arcade-gold); line-height:1;">📲 AGGIUNGI ALLA SCHERMATA HOME</div>
 
     <div class="ios-step-box">
-      <div class="ios-icon-badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3399ff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-          <polyline points="16 6 12 2 8 6"/>
-          <line x1="12" y1="2" x2="12" y2="15"/>
-        </svg>
-      </div>
-      <div>1. Premi l'icona <strong style="color:#3399ff;">Condividi</strong> nella barra in basso del browser</div>
+      <div class="ios-icon-badge">🤖</div>
+      <div><strong style="color:#00e640;">Android (Chrome):</strong> Tocca i tre puntini <strong>⋮</strong> in alto a destra e seleziona <strong style="color:var(--arcade-gold);">"Aggiungi a schermata Home"</strong> o <strong>"Installa app"</strong>.</div>
     </div>
 
     <div class="ios-step-box">
-      <div class="ios-icon-badge">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
-          <line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-      </div>
-      <div>2. Scorri e seleziona <strong style="color:var(--arcade-gold);">"Aggiungi alla schermata Home"</strong></div>
+      <div class="ios-icon-badge">🍎</div>
+      <div><strong style="color:#3399ff;">iPhone (Safari):</strong> Premi l'icona <strong>Condividi</strong> in basso e seleziona <strong style="color:var(--arcade-gold);">"Aggiungi alla schermata Home"</strong>.</div>
     </div>
 
     <button id="btn-close-ios-modal" class="btn-arcade" style="padding:8px;">HO CAPITO</button>
@@ -1029,7 +1199,10 @@
     </div>
     <div id="auth-error" class="error-msg"></div>
     <button id="btn-auth-submit" class="btn-arcade">ENTRA NELL'ARENA</button>
-    <button id="btn-install-auth" class="btn-arcade install-pwa">📲 AGGIUNGI ALLA HOME</button>
+    <div class="utility-btn-row">
+      <button id="btn-install-auth" class="btn-arcade install-pwa" style="font-size:1.1rem; padding:8px 6px;">📲 AGGIUNGI HOME</button>
+      <button id="btn-share-auth" class="btn-arcade blue" style="font-size:1.1rem; padding:8px 6px;">📤 CONDIVIDI</button>
+    </div>
     <div style="text-align:center; font-size:1rem; color:#888;">Se il nickname è nuovo verrà creato automaticamente</div>
   </div>
 </div>
@@ -1064,7 +1237,10 @@
         </div>
         <button id="btn-play-bot" class="btn-arcade">⚔️ GIOCA CONTRO BOT</button>
         <button id="btn-customize" class="btn-arcade gold">🥋 PERSONALIZZA FIGHTER</button>
-        <button id="btn-install-lobby" class="btn-arcade install-pwa">📲 AGGIUNGI ALLA HOME</button>
+        <div class="utility-btn-row">
+          <button id="btn-install-lobby" class="btn-arcade install-pwa" style="font-size:1.1rem; padding:8px 6px;">📲 AGGIUNGI HOME</button>
+          <button id="btn-share-lobby" class="btn-arcade blue" style="font-size:1.1rem; padding:8px 6px;">📤 CONDIVIDI</button>
+        </div>
         <button id="btn-logout" class="btn-arcade dark" style="font-size:1.15rem; padding:7px;">CAMBIA UTENTE</button>
       </div>
 
@@ -1181,7 +1357,7 @@
     <h1 class="game-title" id="go-headline" style="font-size:clamp(2.2rem, 6.5vw, 4.3rem);">K.O.! VINCE <span>PLAYER</span></h1>
   </div>
   <div class="arcade-panel">
-    <div id="go-subnote" style="text-align:center; color:var(--arcade-gold); font-size:1.2rem;"></div>
+    <div id="go-subnote" style="text-align:center; color:var(--arcade-gold); font-size:1.2rem; min-height:1.2em;"></div>
     <div class="summary-box">
       <div class="summary-row"><span>ROUND VINTI</span><span id="go-rounds">2 - 0</span></div>
       <div class="summary-row"><span>DANNI TOTALI INFLITTI</span><span id="go-damage">0</span></div>
@@ -1189,6 +1365,7 @@
       <div class="summary-row"><span>RECORD CARRIERA</span><span id="go-record">0V - 0P</span></div>
     </div>
     <button id="btn-rematch" class="btn-arcade">🔥 RIVINCITA</button>
+    <button id="btn-share-gameover" class="btn-arcade blue">📤 CONDIVIDI RISULTATO</button>
     <button id="btn-go-custom" class="btn-arcade gold">🥋 CAMBIA PERSONAGGIO</button>
     <button id="btn-go-menu" class="btn-arcade dark">TORNA AL MENU</button>
   </div>
@@ -1198,123 +1375,100 @@
 
 <script>
 /* ============================================================================
- * 0. GENERAZIONE DINAMICA ICONA PWA 512x512, MANIFEST BLOB E INSTALLER
+ * 0. TOAST, FULLSCREEN, SHARE MANAGER E PWA INSTALLER
  * ============================================================================ */
+let toastTimeout = null;
+function showToast(msg) {
+  const el = document.getElementById('toast-banner');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function enterFullscreenSafe() {
+  const docEl = document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+    if (req) {
+      req.call(docEl).catch(() => {});
+    }
+  }
+}
+
+function toggleFullscreenSafe() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document).catch(() => {});
+  } else {
+    enterFullscreenSafe();
+  }
+}
+
+const ShareManager = {
+  async shareGame(customText = null) {
+    const shareUrl = window.location.href.split('#')[0];
+    const shareData = {
+      title: 'BAGNO DI SANGUE - Arcade Fighter Online',
+      text: customText || '🩸 Sfidami subito a BAGNO DI SANGUE! Picchiaduro arcade 2D online direttamente dal browser:',
+      url: shareUrl
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+
+    const fullText = `${shareData.text} ${shareUrl}`;
+    try {
+      await navigator.clipboard.writeText(fullText);
+      showToast('📋 LINK COPIATO NEGLI APPUNTI!');
+    } catch (e) {
+      const tmp = document.createElement('textarea');
+      tmp.value = fullText;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+      showToast('📋 LINK COPIATO NEGLI APPUNTI!');
+    }
+  }
+};
+
 const PWAManager = {
   deferredPrompt: null,
 
   isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.matchMedia('(display-mode: fullscreen)').matches ||
+           window.navigator.standalone === true;
   },
 
-  generateIconDataURL() {
-    const size = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-
-    // Sfondo rosso sangue profondo con vignettatura
-    const grad = ctx.createRadialGradient(size * 0.5, size * 0.45, 40, size * 0.5, size * 0.5, size * 0.72);
-    grad.addColorStop(0, '#c40000');
-    grad.addColorStop(0.55, '#8a0000');
-    grad.addColorStop(1, '#290000');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-
-    // Gocce di sangue che colano dall'alto
-    const drips = [
-      { x: 42, w: 28, h: 115 },
-      { x: 96, w: 22, h: 78 },
-      { x: 152, w: 32, h: 138 },
-      { x: 225, w: 24, h: 68 },
-      { x: 298, w: 30, h: 125 },
-      { x: 368, w: 24, h: 88 },
-      { x: 432, w: 34, h: 145 },
-      { x: 482, w: 20, h: 72 }
-    ];
-
-    ctx.fillStyle = '#ff1a1a';
-    ctx.fillRect(0, 0, size, 28);
-    drips.forEach(d => {
-      ctx.fillStyle = '#ff1a1a';
-      ctx.beginPath();
-      ctx.roundRect(d.x - d.w / 2, 14, d.w, d.h, d.w / 2);
-      ctx.fill();
-
-      // Riflesso lucido sulle gocce
-      ctx.fillStyle = 'rgba(255, 180, 180, 0.35)';
-      ctx.beginPath();
-      ctx.roundRect(d.x - d.w * 0.22, 24, d.w * 0.22, d.h * 0.65, 4);
-      ctx.fill();
-    });
-
-    // Cornice arcade oro/nera
-    ctx.strokeStyle = '#ffcc00';
-    ctx.lineWidth = 14;
-    ctx.strokeRect(14, 14, size - 28, size - 28);
-
-    // Testo centrale "BAGNO DI SANGUE"
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Ombra pesante 3D
-    ctx.font = '900 108px Impact, "Arial Black", sans-serif';
-    ctx.fillStyle = '#140000';
-    ctx.fillText('BAGNO', size / 2 + 6, 224 + 6);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('BAGNO', size / 2, 224);
-
-    ctx.font = '900 54px Impact, "Arial Black", sans-serif';
-    ctx.fillStyle = '#140000';
-    ctx.fillText('DI', size / 2 + 4, 294 + 4);
-    ctx.fillStyle = '#ff3333';
-    ctx.fillText('DI', size / 2, 294);
-
-    ctx.font = '900 102px Impact, "Arial Black", sans-serif';
-    ctx.fillStyle = '#140000';
-    ctx.fillText('SANGUE', size / 2 + 6, 376 + 6);
-    ctx.fillStyle = '#ffcc00';
-    ctx.fillText('SANGUE', size / 2, 376);
-
-    return canvas.toDataURL('image/png');
+  registerInlineServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const swCode = `
+        self.addEventListener('install', (e) => self.skipWaiting());
+        self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+        self.addEventListener('fetch', (e) => {});
+      `;
+      const swBlob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl).catch(() => {});
+    } catch (e) {}
   },
 
   init() {
-    const iconUrl = this.generateIconDataURL();
+    this.registerInlineServiceWorker();
 
-    const appleIcon = document.getElementById('dynamic-apple-icon');
-    const favIcon = document.getElementById('dynamic-favicon');
-    if (appleIcon) appleIcon.href = iconUrl;
-    if (favIcon) favIcon.href = iconUrl;
-
-    const manifestObj = {
-      name: 'BAGNO DI SANGUE',
-      short_name: 'BagnoSangue',
-      description: 'Picchiaduro arcade 2D multiplayer online e offline.',
-      start_url: window.location.href.split('#')[0],
-      scope: './',
-      display: 'standalone',
-      orientation: 'any',
-      theme_color: '#8a0000',
-      background_color: '#0a0a0a',
-      icons: [
-        {
-          src: iconUrl,
-          sizes: '512x512',
-          type: 'image/png',
-          purpose: 'any maskable'
-        }
-      ]
-    };
-
-    try {
-      const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-      const manifestUrl = URL.createObjectURL(blob);
-      const manifestLink = document.getElementById('dynamic-manifest');
-      if (manifestLink) manifestLink.href = manifestUrl;
-    } catch (e) {
-      console.warn('Manifest Blob non supportato:', e);
+    const previewImg = document.getElementById('modal-preview-icon');
+    if (previewImg && window.__BDS_ICON_URL__) {
+      previewImg.src = window.__BDS_ICON_URL__;
     }
 
     this.updateInstallButtonsVisibility();
@@ -1328,15 +1482,12 @@ const PWAManager = {
     window.addEventListener('appinstalled', () => {
       this.deferredPrompt = null;
       this.updateInstallButtonsVisibility();
+      showToast('✅ APP INSTALLATA NELLA HOME!');
     });
 
-    const installBtns = [
-      document.getElementById('btn-install-auth'),
-      document.getElementById('btn-install-lobby')
-    ];
-    installBtns.forEach(btn => {
-      if (!btn) return;
-      btn.addEventListener('click', () => this.triggerInstall());
+    ['btn-install-auth', 'btn-install-lobby'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.addEventListener('click', () => this.triggerInstall());
     });
 
     const closeModalBtn = document.getElementById('btn-close-ios-modal');
@@ -1349,11 +1500,8 @@ const PWAManager = {
 
   updateInstallButtonsVisibility() {
     const standalone = this.isStandalone();
-    const btns = [
-      document.getElementById('btn-install-auth'),
-      document.getElementById('btn-install-lobby')
-    ];
-    btns.forEach(btn => {
+    ['btn-install-auth', 'btn-install-lobby'].forEach(id => {
+      const btn = document.getElementById(id);
       if (!btn) return;
       btn.style.display = standalone ? 'none' : 'block';
     });
@@ -1368,6 +1516,10 @@ const PWAManager = {
         this.updateInstallButtonsVisibility();
       }
     } else {
+      const previewImg = document.getElementById('modal-preview-icon');
+      if (previewImg && window.__BDS_ICON_URL__) {
+        previewImg.src = window.__BDS_ICON_URL__;
+      }
       document.getElementById('pwa-ios-modal').classList.add('active');
     }
   }
@@ -1419,7 +1571,7 @@ function updateModeBadge() {
 }
 
 /**
- * GLOBAL APP STATE (Offline localStorage + Cloud Firebase sync)
+ * GLOBAL APP STATE
  */
 const AppState = {
   currentUser: null,
@@ -1905,7 +2057,9 @@ const OnlineManager = {
         roundWinner: null,
         matchWinner: null,
         rematchHost: false,
-        rematchGuest: false
+        rematchGuest: false,
+        rematchSeq: 0,
+        rematchCancelled: false
       },
       hitEvent: null
     });
@@ -2201,7 +2355,7 @@ const SoundEngine = {
 };
 
 /**
- * FIGHTER RENDERER (With Progressive Battle Damage & Gore)
+ * FIGHTER RENDERER
  */
 function drawFighterModel(ctx, f, time) {
   ctx.save();
@@ -2281,7 +2435,6 @@ function drawFighterModel(ctx, f, time) {
   ctx.lineTo(8, shoulderY);
   ctx.stroke();
 
-  // Progressive Wounds on Torso
   if (!flash && hpRatio < 0.72) {
     ctx.fillStyle = '#990000';
     ctx.beginPath();
@@ -2303,7 +2456,6 @@ function drawFighterModel(ctx, f, time) {
     ctx.fillRect(2, shoulderY + 32, 3, 12);
   }
 
-  // Belt
   ctx.fillStyle = flash ? '#fff' : '#111';
   ctx.fillRect(-waistW / 2 - 1, hipY - 8, waistW + 2, 8);
   ctx.fillStyle = flash ? '#fff' : outfit.trim;
@@ -2352,7 +2504,6 @@ function drawFighterModel(ctx, f, time) {
     ctx.fillRect(4, 6, 6, 2);
   }
 
-  // Facial Bleeding
   if (!flash && hpRatio < 0.78) {
     ctx.fillStyle = '#e60000';
     ctx.fillRect(8, 1, 2.5, 9);
@@ -2365,7 +2516,6 @@ function drawFighterModel(ctx, f, time) {
     ctx.fillRect(6, 7, 3, 6);
   }
 
-  // Hair Styles
   const hairStyle = f.appearance.hair;
   ctx.fillStyle = flash ? '#fff' : '#141414';
   if (hairStyle === 'Corti') {
@@ -2561,6 +2711,8 @@ const FightEngine = {
   roomRef: null,
   syncAccum: 0,
   lastProcessedHitId: 0,
+  lastHandledRematchSeq: 0,
+  rematchTimeoutId: null,
   forfeitWin: false,
   remoteTargetX: 0,
   remoteTargetY: 0,
@@ -2573,7 +2725,7 @@ const FightEngine = {
   roundTimer: 60,
   timerAccum: 0,
   phase: 'intro',
-  introTimer: 0,
+  introTimer: 2.5,
   roundEndTimer: 0,
   roundBannerText: '',
   fightTextTimer: 0,
@@ -2643,6 +2795,7 @@ const FightEngine = {
   },
 
   startMatch() {
+    enterFullscreenSafe();
     this.cleanupOnlineListeners();
     this.isOnlineMatch = false;
     this.roomId = null;
@@ -2673,12 +2826,14 @@ const FightEngine = {
   },
 
   async startOnlineMatch(roomId, role) {
+    enterFullscreenSafe();
     this.cleanupOnlineListeners();
     this.isOnlineMatch = true;
     this.roomId = roomId;
     this.myRole = role;
     this.forfeitWin = false;
     this.lastProcessedHitId = 0;
+    this.lastHandledRematchSeq = 0;
 
     await AppState.setUserStatus('IN PARTITA');
 
@@ -2693,6 +2848,8 @@ const FightEngine = {
       showScreen('screen-lobby');
       return;
     }
+
+    this.lastHandledRematchSeq = (roomData.match && roomData.match.rematchSeq) ? roomData.match.rematchSeq : 0;
 
     this.round = 1;
     this.p1RoundsWon = 0;
@@ -2733,10 +2890,12 @@ const FightEngine = {
       const data = snap.val();
       if (!data) {
         if (this.phase !== 'match_end') this.handleOpponentDisconnect();
+        else this.markOpponentLeftGameOver();
         return;
       }
-      if (data.connected === false && this.phase !== 'match_end') {
-        this.handleOpponentDisconnect();
+      if (data.connected === false) {
+        if (this.phase !== 'match_end') this.handleOpponentDisconnect();
+        else this.markOpponentLeftGameOver();
         return;
       }
       this.remoteDataCache = data;
@@ -2749,7 +2908,7 @@ const FightEngine = {
       rf.state = data.state || 'idle';
       rf.specialUsed = !!data.specialUsed;
 
-      if (typeof data.hp === 'number' && data.hp < rf.hp) {
+      if (typeof data.hp === 'number' && data.hp < rf.hp && this.phase === 'fight') {
         rf.hitFlashTimer = 0.14;
       }
       if (typeof data.hp === 'number') {
@@ -2790,7 +2949,7 @@ const FightEngine = {
         }
       }
 
-      if (ev.senderRole !== this.myRole) {
+      if (ev.senderRole !== this.myRole && this.phase === 'fight') {
         const hitX = (ev.xRatio || 0.5) * this.width;
         const hitY = this.floorY - (ev.yOffset || 65);
         if (ev.blocked) {
@@ -2826,12 +2985,51 @@ const FightEngine = {
       const m = snap.val();
       if (!m) return;
 
+      if (m.rematchCancelled && this.phase === 'match_end') {
+        this.markOpponentLeftGameOver();
+        return;
+      }
+
+      if (this.myRole === 'host' && m.rematchHost && m.rematchGuest && this.phase === 'match_end') {
+        const nextSeq = (m.rematchSeq || 0) + 1;
+        this.lastHandledRematchSeq = nextSeq;
+
+        db.ref(`rooms/${this.roomId}/host`).update({
+          hp: 100, state: 'idle', specialUsed: false, roundsWon: 0, xRatio: 0.28, yOffset: 0
+        });
+        db.ref(`rooms/${this.roomId}/guest`).update({
+          hp: 100, state: 'idle', specialUsed: false, roundsWon: 0, xRatio: 0.72, yOffset: 0
+        });
+        db.ref(`rooms/${this.roomId}/hitEvent`).remove();
+
+        db.ref(`rooms/${this.roomId}/match`).set({
+          round: 1,
+          timer: 60,
+          phase: 'intro',
+          roundWinner: null,
+          matchWinner: null,
+          rematchHost: false,
+          rematchGuest: false,
+          rematchCancelled: false,
+          rematchSeq: nextSeq
+        });
+
+        this.restartOnlineRematch();
+        return;
+      }
+
+      if (typeof m.rematchSeq === 'number' && m.rematchSeq > this.lastHandledRematchSeq) {
+        this.lastHandledRematchSeq = m.rematchSeq;
+        this.restartOnlineRematch();
+        return;
+      }
+
       if (this.myRole === 'guest') {
         if (typeof m.timer === 'number' && this.roundTimer !== m.timer) {
           this.roundTimer = m.timer;
           this.updateHUD();
         }
-        if (typeof m.round === 'number' && m.round !== this.round) {
+        if (typeof m.round === 'number' && m.round !== this.round && m.phase === 'intro') {
           this.setupRound(m.round);
         }
         if (m.phase === 'round_end' && this.phase === 'fight' && m.roundWinner) {
@@ -2847,33 +3045,37 @@ const FightEngine = {
           this.endRound(winner);
         }
       }
-
-      if (m.rematchHost && m.rematchGuest && this.phase === 'match_end') {
-        if (this.myRole === 'host') {
-          db.ref(`rooms/${this.roomId}/match`).set({
-            round: 1,
-            timer: 60,
-            phase: 'intro',
-            roundWinner: null,
-            matchWinner: null,
-            rematchHost: false,
-            rematchGuest: false
-          });
-        }
-        this.restartOnlineRematch();
-      }
     });
   },
 
-  restartOnlineRematch() {
+  markOpponentLeftGameOver() {
+    clearTimeout(this.rematchTimeoutId);
+    this.forfeitWin = true;
+    const subnote = document.getElementById('go-subnote');
+    const rematchBtn = document.getElementById('btn-rematch');
+    if (subnote) subnote.textContent = '⚠️ L\'AVVERSARIO HA LASCIATO LA STANZA';
+    if (rematchBtn) {
+      rematchBtn.textContent = 'AVVERSARIO USCITO';
+      rematchBtn.disabled = true;
+    }
+  },
+
+  async restartOnlineRematch() {
+    clearTimeout(this.rematchTimeoutId);
+    await AppState.setUserStatus('IN PARTITA');
     this.round = 1;
     this.p1RoundsWon = 0;
     this.p2RoundsWon = 0;
     this.stats = { damageDealt: 0, combosExecuted: 0 };
     this.forfeitWin = false;
+    this.lastProcessedHitId = 0;
     this.updateRoundDots();
     this.setupRound(1);
     showScreen('screen-fight');
+
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    this.lastTime = performance.now();
+    this.rafId = requestAnimationFrame((t) => this.loop(t));
   },
 
   handleOpponentDisconnect() {
@@ -2888,7 +3090,22 @@ const FightEngine = {
     this.finishMatch();
   },
 
+  async leaveOnlineRoomGracefully() {
+    clearTimeout(this.rematchTimeoutId);
+    if (this.isOnlineMatch && ONLINE_ENABLED && db && this.roomId) {
+      try {
+        await db.ref(`rooms/${this.roomId}/match`).update({ rematchCancelled: true });
+        await db.ref(`rooms/${this.roomId}/${this.myRole}/connected`).set(false);
+      } catch (e) {}
+    }
+    this.cleanupOnlineListeners();
+    this.isOnlineMatch = false;
+    this.roomId = null;
+    await AppState.setUserStatus('ONLINE');
+  },
+
   cleanupOnlineListeners() {
+    clearTimeout(this.rematchTimeoutId);
     if (this.roomId && ONLINE_ENABLED && db) {
       db.ref(`rooms/${this.roomId}/host`).off();
       db.ref(`rooms/${this.roomId}/guest`).off();
@@ -3654,7 +3871,7 @@ const FightEngine = {
     if (localWon) AppState.currentUser.stats.wins++;
     else AppState.currentUser.stats.losses++;
 
-    await AppState.saveCurrentUser('ONLINE');
+    await AppState.saveCurrentUser(this.isOnlineMatch ? 'IN PARTITA' : 'ONLINE');
 
     const winnerName = !this.isOnlineMatch
       ? (localWon ? this.p1.nickname : this.p2.nickname)
@@ -3668,8 +3885,13 @@ const FightEngine = {
     document.getElementById('go-record').textContent = `${AppState.currentUser.stats.wins}V - ${AppState.currentUser.stats.losses}P`;
 
     const rematchBtn = document.getElementById('btn-rematch');
-    rematchBtn.textContent = '🔥 RIVINCITA';
-    rematchBtn.disabled = false;
+    if (this.forfeitWin) {
+      rematchBtn.textContent = 'AVVERSARIO USCITO';
+      rematchBtn.disabled = true;
+    } else {
+      rematchBtn.textContent = '🔥 RIVINCITA';
+      rematchBtn.disabled = false;
+    }
 
     showScreen('screen-gameover');
   },
@@ -3919,9 +4141,32 @@ window.addEventListener('DOMContentLoaded', async () => {
   PWAManager.init();
   updateModeBadge();
 
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    toggleFullscreenSafe();
+  });
+
   document.getElementById('btn-mute').addEventListener('click', () => {
     SoundEngine.init();
     SoundEngine.toggleMute();
+  });
+
+  // Share buttons wiring
+  document.getElementById('btn-share-auth').addEventListener('click', () => {
+    ShareManager.shareGame();
+  });
+
+  document.getElementById('btn-share-lobby').addEventListener('click', () => {
+    const nick = AppState.currentUser ? AppState.currentUser.nickname : 'un guerriero';
+    const roomNote = OnlineManager.activePrivateRoomCode
+      ? ` (Codice Stanza Privata: ${OnlineManager.activePrivateRoomCode})`
+      : '';
+    ShareManager.shareGame(`🩸 ${nick} ti sfida su BAGNO DI SANGUE!${roomNote} Entra subito nell'arena:`);
+  });
+
+  document.getElementById('btn-share-gameover').addEventListener('click', () => {
+    const headline = document.getElementById('go-headline').textContent;
+    const dmg = document.getElementById('go-damage').textContent;
+    ShareManager.shareGame(`🩸 ${headline} con ${dmg} danni inflitti su BAGNO DI SANGUE! Riesci a battermi?`);
   });
 
   const unlockAudio = () => SoundEngine.init();
@@ -3935,6 +4180,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btn-auth-submit').addEventListener('click', async () => {
     SoundEngine.init();
+    enterFullscreenSafe();
     const nick = document.getElementById('auth-nick').value;
     const pass = document.getElementById('auth-pass').value;
     const errEl = document.getElementById('auth-error');
@@ -4012,25 +4258,38 @@ window.addEventListener('DOMContentLoaded', async () => {
       FightEngine.startMatch();
     } else if (ONLINE_ENABLED && db && FightEngine.roomId && !FightEngine.forfeitWin) {
       const btn = document.getElementById('btn-rematch');
-      btn.textContent = 'IN ATTESA AVVERSARIO...';
+      btn.textContent = '⏳ IN ATTESA AVVERSARIO...';
       btn.disabled = true;
+
       const field = FightEngine.myRole === 'host' ? 'rematchHost' : 'rematchGuest';
-      await db.ref(`rooms/${FightEngine.roomId}/match`).update({ [field]: true });
+      await db.ref(`rooms/${FightEngine.roomId}/match`).update({
+        [field]: true,
+        rematchCancelled: false
+      });
+
+      clearTimeout(FightEngine.rematchTimeoutId);
+      FightEngine.rematchTimeoutId = setTimeout(() => {
+        if (FightEngine.phase === 'match_end' && btn.disabled) {
+          document.getElementById('go-subnote').textContent = '⚠️ TEMPO SCADUTO: L\'AVVERSARIO NON HA ACCETTATO';
+          btn.textContent = '🔥 RIPROVA RIVINCITA';
+          btn.disabled = false;
+        }
+      }, 20000);
     } else {
-      FightEngine.cleanupOnlineListeners();
+      await FightEngine.leaveOnlineRoomGracefully();
       updateLobbyUI();
       showScreen('screen-lobby');
     }
   });
 
-  document.getElementById('btn-go-custom').addEventListener('click', () => {
-    FightEngine.cleanupOnlineListeners();
+  document.getElementById('btn-go-custom').addEventListener('click', async () => {
+    await FightEngine.leaveOnlineRoomGracefully();
     initCustomizationUI();
     showScreen('screen-custom');
   });
 
-  document.getElementById('btn-go-menu').addEventListener('click', () => {
-    FightEngine.cleanupOnlineListeners();
+  document.getElementById('btn-go-menu').addEventListener('click', async () => {
+    await FightEngine.leaveOnlineRoomGracefully();
     updateLobbyUI();
     showScreen('screen-lobby');
   });
