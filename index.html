@@ -449,23 +449,23 @@ const CUSTOM_ICON_SRC = 'IMG-20261115-WA1949.jpg';
     text-align: center;
   }
 
-  /* TOP RIGHT BUTTONS (FULLSCREEN + MUTE) */
+  /* TOP RIGHT BUTTONS (TRACK + FULLSCREEN + MUTE) */
   .top-right-controls {
     position: fixed;
     top: max(10px, var(--safe-top));
     right: max(10px, var(--safe-right));
     z-index: 999;
     display: flex;
-    gap: 6px;
+    gap: 5px;
   }
 
   .hud-top-btn {
     background: rgba(26, 26, 26, 0.9);
     border: 2px solid var(--arcade-gold);
     color: var(--arcade-gold);
-    padding: 6px 10px;
+    padding: 6px 9px;
     border-radius: 6px;
-    font-size: 1.05rem;
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -488,7 +488,7 @@ const CUSTOM_ICON_SRC = 'IMG-20261115-WA1949.jpg';
     padding-top: max(7px, var(--safe-top));
     padding-bottom: 7px;
     padding-left: max(14px, var(--safe-left));
-    padding-right: calc(135px + var(--safe-right));
+    padding-right: calc(172px + var(--safe-right));
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -855,7 +855,7 @@ const CUSTOM_ICON_SRC = 'IMG-20261115-WA1949.jpg';
     position: absolute;
     top: max(8px, var(--safe-top));
     left: max(10px, var(--safe-left));
-    right: calc(135px + var(--safe-right));
+    right: calc(172px + var(--safe-right));
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1137,6 +1137,7 @@ const CUSTOM_ICON_SRC = 'IMG-20261115-WA1949.jpg';
 
 <div id="toast-banner"></div>
 <div class="top-right-controls">
+  <button id="btn-track" class="hud-top-btn" title="Cambia Traccia Musicale">🎵 1/5</button>
   <button id="btn-fullscreen" class="hud-top-btn" title="Schermo Intero">⛶</button>
   <button id="btn-mute" class="hud-top-btn" title="Audio On/Off">🔊 AUDIO</button>
 </div>
@@ -2108,22 +2109,109 @@ const PALETTES = {
 };
 
 /**
- * PROCEDURAL 8-BIT WEB AUDIO SYNTH
+ * PROCEDURAL 8-BIT WEB AUDIO SYNTH + 5 RANDOM ARCADE SOUNDTRACKS
  */
 const SoundEngine = {
   ctx: null,
-  bgmInterval: null,
+  bgmTimerId: null,
   bgmStep: 0,
   isCombat: false,
+  iosUnlocked: false,
+  currentTrackIndex: Math.floor(Math.random() * 5),
+
+  tracks: [
+    {
+      name: 'ARENA DI SANGUE',
+      stepMs: 185,
+      bassWave: 'sawtooth',
+      leadWave: 'square',
+      bass: [110, 110, 130.81, 146.83, 110, 110, 164.81, 146.83, 98, 98, 110, 130.81, 87.31, 87.31, 98, 110],
+      lead: [440, 0, 523.25, 493.88, 440, 392, 329.63, 0, 392, 0, 440, 493.88, 523.25, 493.88, 440, 329.63]
+    },
+    {
+      name: 'FURIA NOTTURNA',
+      stepMs: 165,
+      bassWave: 'sawtooth',
+      leadWave: 'square',
+      bass: [82.41, 82.41, 164.81, 82.41, 98.00, 98.00, 196.00, 98.00, 110.00, 110.00, 220.00, 110.00, 123.47, 110.00, 98.00, 82.41],
+      lead: [329.63, 392.00, 493.88, 0, 392.00, 493.88, 587.33, 0, 440.00, 523.25, 659.25, 587.33, 493.88, 440.00, 392.00, 329.63]
+    },
+    {
+      name: 'MASSACRO CIBERNETICO',
+      stepMs: 150,
+      bassWave: 'square',
+      leadWave: 'sawtooth',
+      bass: [73.42, 146.83, 73.42, 146.83, 87.31, 174.61, 87.31, 174.61, 98.00, 196.00, 98.00, 196.00, 65.41, 130.81, 82.41, 164.81],
+      lead: [587.33, 0, 523.25, 587.33, 698.46, 0, 659.25, 587.33, 523.25, 440.00, 523.25, 587.33, 440.00, 0, 392.00, 329.63]
+    },
+    {
+      name: 'TEMPIO OSCURO',
+      stepMs: 205,
+      bassWave: 'triangle',
+      leadWave: 'square',
+      bass: [65.41, 65.41, 77.78, 98.00, 65.41, 65.41, 116.54, 98.00, 58.27, 58.27, 77.78, 87.31, 55.00, 65.41, 77.78, 98.00],
+      lead: [261.63, 311.13, 392.00, 466.16, 392.00, 311.13, 261.63, 0, 233.08, 311.13, 349.23, 392.00, 466.16, 392.00, 349.23, 311.13]
+    },
+    {
+      name: 'RESA DEI CONTI',
+      stepMs: 172,
+      bassWave: 'sawtooth',
+      leadWave: 'triangle',
+      bass: [92.50, 92.50, 110.00, 123.47, 138.59, 138.59, 123.47, 110.00, 82.41, 82.41, 92.50, 110.00, 123.47, 110.00, 92.50, 73.42],
+      lead: [369.99, 440.00, 554.37, 493.88, 440.00, 554.37, 659.25, 554.37, 493.88, 440.00, 369.99, 329.63, 369.99, 440.00, 493.88, 554.37]
+    }
+  ],
+
+  updateTrackButtonUI() {
+    const btn = document.getElementById('btn-track');
+    if (btn) {
+      btn.textContent = `🎵 ${this.currentTrackIndex + 1}/${this.tracks.length}`;
+    }
+  },
+
+  nextTrack() {
+    this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+    this.bgmStep = 0;
+    this.updateTrackButtonUI();
+    const t = this.tracks[this.currentTrackIndex];
+    showToast(`🎵 TRACCIA ${this.currentTrackIndex + 1}: ${t.name}`);
+    this.init();
+  },
+
+  unlockIOSAudioChannel() {
+    if (this.iosUnlocked) return;
+    try {
+      const silentWav = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      const audio = new Audio(silentWav);
+      audio.setAttribute('playsinline', '');
+      audio.play().then(() => {
+        this.iosUnlocked = true;
+      }).catch(() => {});
+    } catch (e) {}
+  },
 
   init() {
+    this.unlockIOSAudioChannel();
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
+      if (AudioCtx) {
+        this.ctx = new AudioCtx();
+      }
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (!this.ctx) return;
+
+    if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+      this.ctx.resume().catch(() => {});
     }
+
+    try {
+      const buffer = this.ctx.createBuffer(1, 1, 22050);
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.ctx.destination);
+      source.start(0);
+    } catch (e) {}
+
     this.startBGM();
   },
 
@@ -2131,63 +2219,68 @@ const SoundEngine = {
     AppState.isMuted = !AppState.isMuted;
     const btn = document.getElementById('btn-mute');
     btn.textContent = AppState.isMuted ? '🔇 MUTO' : '🔊 AUDIO';
-    if (!AppState.isMuted && this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (!AppState.isMuted) {
+      this.init();
     }
   },
 
   startBGM() {
-    if (this.bgmInterval) return;
-    const bassNotes = [110, 110, 130.81, 146.83, 110, 110, 164.81, 146.83, 98, 98, 110, 130.81, 87.31, 87.31, 98, 110];
-    const leadNotes = [440, 0, 523.25, 493.88, 440, 392, 329.63, 0, 392, 0, 440, 493.88, 523.25, 493.88, 440, 329.63];
+    if (this.bgmTimerId) return;
 
-    this.bgmInterval = setInterval(() => {
-      if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
-      if (FightEngine.isPortraitPaused) return;
-      const now = this.ctx.currentTime;
-      const volMult = this.isCombat ? 0.35 : 0.85;
+    const scheduleNextStep = () => {
+      const track = this.tracks[this.currentTrackIndex] || this.tracks[0];
+      const stepDurSec = track.stepMs / 1000;
 
-      const bFreq = bassNotes[this.bgmStep % bassNotes.length];
-      if (bFreq > 0) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(bFreq, now);
-        gain.gain.setValueAtTime(0.055 * volMult, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.17);
+      if (!AppState.isMuted && this.ctx && this.ctx.state === 'running' && !FightEngine.isPortraitPaused) {
+        const now = this.ctx.currentTime;
+        const volMult = this.isCombat ? 0.38 : 0.88;
+
+        const bFreq = track.bass[this.bgmStep % track.bass.length];
+        if (bFreq > 0) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = track.bassWave;
+          osc.frequency.setValueAtTime(bFreq, now);
+          gain.gain.setValueAtTime(0.065 * volMult, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + stepDurSec * 0.88);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + stepDurSec * 0.92);
+        }
+
+        const lFreq = track.lead[this.bgmStep % track.lead.length];
+        if (lFreq > 0) {
+          const osc2 = this.ctx.createOscillator();
+          const gain2 = this.ctx.createGain();
+          osc2.type = track.leadWave;
+          osc2.frequency.setValueAtTime(lFreq, now);
+          gain2.gain.setValueAtTime(0.038 * volMult, now);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + stepDurSec * 0.82);
+          osc2.connect(gain2);
+          gain2.connect(this.ctx.destination);
+          osc2.start(now);
+          osc2.stop(now + stepDurSec * 0.86);
+        }
+
+        this.bgmStep++;
       }
 
-      const lFreq = leadNotes[this.bgmStep % leadNotes.length];
-      if (lFreq > 0) {
-        const osc2 = this.ctx.createOscillator();
-        const gain2 = this.ctx.createGain();
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(lFreq, now);
-        gain2.gain.setValueAtTime(0.032 * volMult, now);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc2.connect(gain2);
-        gain2.connect(this.ctx.destination);
-        osc2.start(now);
-        osc2.stop(now + 0.16);
-      }
+      this.bgmTimerId = setTimeout(scheduleNextStep, track.stepMs);
+    };
 
-      this.bgmStep++;
-    }, 185);
+    scheduleNextStep();
   },
 
   playInviteChime() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'square';
       osc.frequency.setValueAtTime(freq, now + i * 0.08);
-      gain.gain.setValueAtTime(0.18, now + i * 0.08);
+      gain.gain.setValueAtTime(0.2, now + i * 0.08);
       gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.18);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -2197,14 +2290,14 @@ const SoundEngine = {
   },
 
   playPunch() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(210, now);
     osc.frequency.exponentialRampToValueAtTime(38, now + 0.1);
-    gain.gain.setValueAtTime(0.42, now);
+    gain.gain.setValueAtTime(0.45, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -2213,14 +2306,14 @@ const SoundEngine = {
   },
 
   playKick() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(155, now);
     osc.frequency.exponentialRampToValueAtTime(25, now + 0.19);
-    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.setValueAtTime(0.62, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -2229,7 +2322,7 @@ const SoundEngine = {
   },
 
   playBoneCrunch() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     [130, 95, 70].forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
@@ -2237,7 +2330,7 @@ const SoundEngine = {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, now + idx * 0.03);
       osc.frequency.exponentialRampToValueAtTime(28, now + idx * 0.03 + 0.09);
-      gain.gain.setValueAtTime(0.32, now + idx * 0.03);
+      gain.gain.setValueAtTime(0.35, now + idx * 0.03);
       gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.03 + 0.1);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -2247,14 +2340,14 @@ const SoundEngine = {
   },
 
   playBlock() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(320, now);
     osc.frequency.setValueAtTime(220, now + 0.04);
-    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.setValueAtTime(0.22, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -2263,7 +2356,7 @@ const SoundEngine = {
   },
 
   playBloodSplash(heavy = false) {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const dur = heavy ? 0.28 : 0.16;
     const bufferSize = this.ctx.sampleRate * dur;
@@ -2281,7 +2374,7 @@ const SoundEngine = {
     filter.frequency.exponentialRampToValueAtTime(260, now + dur);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(heavy ? 0.48 : 0.34, now);
+    gain.gain.setValueAtTime(heavy ? 0.5 : 0.36, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
 
     noise.connect(filter);
@@ -2291,7 +2384,7 @@ const SoundEngine = {
   },
 
   playGong() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const freqs = [110, 165, 224, 311];
     freqs.forEach((f, idx) => {
@@ -2300,7 +2393,7 @@ const SoundEngine = {
       osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
       osc.frequency.setValueAtTime(f, now);
       osc.frequency.exponentialRampToValueAtTime(f * 0.96, now + 1.1);
-      gain.gain.setValueAtTime(0.14 / (idx + 1), now);
+      gain.gain.setValueAtTime(0.16 / (idx + 1), now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 1.15);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -2310,7 +2403,7 @@ const SoundEngine = {
   },
 
   playFightVoice() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -2318,7 +2411,7 @@ const SoundEngine = {
     osc.frequency.setValueAtTime(280, now);
     osc.frequency.linearRampToValueAtTime(420, now + 0.12);
     osc.frequency.exponentialRampToValueAtTime(160, now + 0.35);
-    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.setValueAtTime(0.28, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -2327,7 +2420,7 @@ const SoundEngine = {
   },
 
   playKOExplosion() {
-    if (AppState.isMuted || !this.ctx) return;
+    if (AppState.isMuted || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const bufferSize = this.ctx.sampleRate * 0.85;
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -2344,7 +2437,7 @@ const SoundEngine = {
     filter.frequency.exponentialRampToValueAtTime(45, now + 0.85);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.68, now);
+    gain.gain.setValueAtTime(0.7, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
 
     noise.connect(filter);
@@ -4140,13 +4233,17 @@ const FightEngine = {
 window.addEventListener('DOMContentLoaded', async () => {
   PWAManager.init();
   updateModeBadge();
+  SoundEngine.updateTrackButtonUI();
+
+  document.getElementById('btn-track').addEventListener('click', () => {
+    SoundEngine.nextTrack();
+  });
 
   document.getElementById('btn-fullscreen').addEventListener('click', () => {
     toggleFullscreenSafe();
   });
 
   document.getElementById('btn-mute').addEventListener('click', () => {
-    SoundEngine.init();
     SoundEngine.toggleMute();
   });
 
@@ -4169,9 +4266,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     ShareManager.shareGame(`🩸 ${headline} con ${dmg} danni inflitti su BAGNO DI SANGUE! Riesci a battermi?`);
   });
 
+  // Sblocco audio universale Android Chrome + iPhone Safari
   const unlockAudio = () => SoundEngine.init();
-  window.addEventListener('pointerdown', unlockAudio, { once: true });
-  window.addEventListener('keydown', unlockAudio, { once: true });
+  window.addEventListener('touchstart', unlockAudio, { passive: true });
+  window.addEventListener('click', unlockAudio, { passive: true });
+  window.addEventListener('keydown', unlockAudio, { passive: true });
 
   if (await AppState.restoreSession()) {
     updateLobbyUI();
@@ -4317,6 +4416,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const el = document.getElementById(elId);
     const onDown = (e) => {
       e.preventDefault();
+      SoundEngine.init();
       FightEngine.touch[propName] = true;
       el.classList.add('pressed');
     };
@@ -4341,6 +4441,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const el = document.getElementById(elId);
     el.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      SoundEngine.init();
       el.classList.add('pressed');
       FightEngine.triggerAttack(FightEngine.getMyFighter(), moveType);
     });
